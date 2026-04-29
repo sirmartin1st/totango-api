@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Totango API Explorer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito Sans', Helvetica, sans-serif;
+      background: #f5f5f5;
+      color: #000;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #000;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      color: #28BBBB;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    header span {
+      color: #fff;
+      font-size: 13px;
+      opacity: 0.5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    .queries {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .query-card {
+      background: #fff;
+      border: 2px solid #eaeaea;
+      border-radius: 8px;
+      padding: 24px;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+
+    .query-card:hover {
+      border-color: #28BBBB;
+      transform: translateY(-1px);
+    }
+
+    .query-card.active {
+      border-color: #28BBBB;
+      background: #f0fdfd;
+    }
+
+    .query-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .query-card p {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .query-card .tag {
+      display: inline-block;
+      margin-top: 12px;
+      background: #C4F4F4;
+      color: #000;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .run-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: #28BBBB;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-bottom: 32px;
+      font-family: inherit;
+    }
+
+    .run-btn:hover { background: #1fa0a0; color: #fff; }
+    .run-btn:disabled { background: #eaeaea; color: #999; cursor: not-allowed; }
+
+    .status {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 16px;
+      min-height: 20px;
+    }
+
+    .status.error { color: #c0392b; }
+    .status.success { color: #27ae60; }
+
+    .results-wrap {
+      background: #fff;
+      border: 1px solid #eaeaea;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid #eaeaea;
+      background: #fafafa;
+    }
+
+    .results-header span {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .export-btn {
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .export-btn:hover { background: #28BBBB; color: #000; }
+    .export-btn:disabled { background: #eaeaea; color: #999; cursor: not-allowed; }
+
+    .table-wrap {
+      overflow-x: auto;
+      max-height: 520px;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      background: #000;
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+    }
+
+    tbody tr:nth-child(even) { background: #fafafa; }
+    tbody tr:hover { background: #f0fdfd; }
+
+    tbody td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #eaeaea;
+      white-space: nowrap;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty {
+      padding: 48px;
+      text-align: center;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #eaeaea;
+      border-top-color: #28BBBB;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Totango API Explorer</h1>
+  <span>GLS Implementation Team</span>
+</header>
+
+<div class="container">
+
+  <div class="queries">
+    <div class="query-card active" onclick="selectQuery('accounts')" id="card-accounts">
+      <h3>Active Onboarding Accounts</h3>
+      <p>All Working Level accounts currently in onboarding. Excludes Completed and Not Started.</p>
+      <span class="tag">Accounts</span>
+    </div>
+    <div class="query-card" onclick="selectQuery('aging')" id="card-aging">
+      <h3>Aging Projects</h3>
+      <p>Accounts flagged as aging that are still in active onboarding stages.</p>
+      <span class="tag">Accounts</span>
+    </div>
+    <div class="query-card" onclick="selectQuery('users')" id="card-users">
+      <h3>All Users</h3>
+      <p>All contacts across onboarding accounts. Includes activity, MI Usage, and Klear Usage.</p>
+      <span class="tag">Users</span>
+    </div>
+  </div>
+
+  <button class="run-btn" id="runBtn" onclick="runQuery()">▶ Run Query</button>
+
+  <div class="status" id="status"></div>
+
+  <div class="results-wrap">
+    <div class="results-header">
+      <span id="resultCount">No results yet</span>
+      <button class="export-btn" id="exportBtn" onclick="exportCSV()" disabled>Export CSV</button>
+    </div>
+    <div class="table-wrap">
+      <div class="empty" id="emptyState">Select a query above and click Run.</div>
+      <table id="resultsTable" style="display:none">
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const TOKEN = '{bcrypt}$2a$10$rpkERv0Iswv5N9s6AH.Peux3yqh7SAr78C/zHXmrdz4pAmwgdf.d2';
+
+  const QUERIES = {
+    accounts: {
+      url: 'https://api-eu1.totango.com/api/v1/search/accounts',
+      payload: JSON.stringify({
+        terms: [
+          { type: "string_attribute", attribute: "Account Type", in_list: ["Working Level"] },
+          { type: "active_list", is_in_one_of: [10001306] },
+          { type: "lifecycle_attribute_stage_by_id", attribute: "Onboarding Lifecycle Status", not_in_list: ["8","1"] }
+        ],
+        count: 1000, offset: 0,
+        fields: [
+          { type: "owner", account_role: "Implementation Manager", field_display_name: "Implementation Manager" },
+          { type: "string", term: "health", field_display_name: "Health Rank" },
+          { type: "health_score", field_display_name: "Health Score" },
+          { type: "health_dimension_score", dimension: "Usage", field_display_name: "Usage Score" },
+          { type: "number_attribute", attribute: "Contract Value", field_display_name: "ACV" },
+          { type: "number_metric", metric: "mi_usage_trend_1698239382368", field_display_name: "MI Usage Trend", source: "userdef" },
+          { type: "simple_date_attribute", attribute: "Contract Start Date", field_display_name: "Contract Start" },
+          { type: "lifecycle_attribute_stage_by_id_total_days", attribute: "Customer Journey Stage", stage: "1", field_display_name: "Days in Onboarding", desc: true },
+          { type: "simple_date_attribute", attribute: "Customer Kick Off Meeting", field_display_name: "Kickoff Date" },
+          { type: "lifecycle_attribute", attribute: "Onboarding Lifecycle Status", field_display_name: "Onboarding Stage" },
+          { type: "string_attribute", attribute: "Simplified Opp Product Groups", field_display_name: "Products" },
+          { type: "string", term: "identifier", field_display_name: "Account ID" },
+          { type: "number_attribute", attribute: "number_of_active_objectives", field_display_name: "Active Objectives" }
+        ],
+        scope: "all"
+      })
+    },
+    aging: {
+      url: 'https://api-eu1.totango.com/api/v1/search/accounts',
+      payload: JSON.stringify({
+        terms: [
+          { type: "string_attribute", attribute: "Account Type", in_list: ["Working Level"] },
+          { type: "active_list", is_in_one_of: [10534660] },
+          { type: "lifecycle_attribute_stage_by_id", attribute: "Onboarding Lifecycle Status", not_in_list: ["8","1"] }
+        ],
+        count: 1000, offset: 0,
+        fields: [
+          { type: "owner", account_role: "Implementation Manager", field_display_name: "Implementation Manager" },
+          { type: "string", term: "health", field_display_name: "Health Rank" },
+          { type: "health_score", field_display_name: "Health Score" },
+          { type: "health_dimension_score", dimension: "Usage", field_display_name: "Usage Score" },
+          { type: "number_attribute", attribute: "Contract Value", field_display_name: "ACV" },
+          { type: "number_metric", metric: "mi_usage_trend_1698239382368", field_display_name: "MI Usage Trend", source: "userdef" },
+          { type: "simple_date_attribute", attribute: "Contract Start Date", field_display_name: "Contract Start" },
+          { type: "lifecycle_attribute_stage_by_id_total_days", attribute: "Customer Journey Stage", stage: "1", field_display_name: "Days in Onboarding", desc: true },
+          { type: "simple_date_attribute", attribute: "Customer Kick Off Meeting", field_display_name: "Kickoff Date" },
+          { type: "lifecycle_attribute", attribute: "Onboarding Lifecycle Status", field_display_name: "Onboarding Stage" },
+          { type: "string_attribute", attribute: "Simplified Opp Product Groups", field_display_name: "Products" },
+          { type: "string", term: "identifier", field_display_name: "Account ID" },
+          { type: "number_attribute", attribute: "number_of_active_objectives", field_display_name: "Active Objectives" }
+        ],
+        scope: "all"
+      })
+    },
+    users: {
+      url: 'https://api-eu1.totango.com/api/v1/search/users',
+      payload: JSON.stringify({
+        terms: [{ type: "parent_account", terms: [{ type: "active_list", is_in_one_of: [10533556] }] }],
+        count: 1000, offset: 0,
+        fields: [
+          { type: "string_attribute", attribute: "Email", field_display_name: "Email" },
+          { type: "string_attribute", attribute: "contact_account_role", field_display_name: "Account Role" },
+          { type: "named_aggregation", aggregation: "activity_days", duration: 30, field_display_name: "Active Days (30d)" },
+          { type: "activity_aggregation", activity: "MI Usage", duration: 14, field_display_name: "MI Usage (14d)" },
+          { type: "string_attribute", attribute: "User Intent Use Case", field_display_name: "Use Case" },
+          { type: "activity_aggregation", activity: "Klear Usage", duration: 14, field_display_name: "Klear Usage (14d)" },
+          { type: "simple_date", term: "simple_last_activity_time", field_display_name: "Last Activity" }
+        ],
+        scope: "all",
+        parent_account_fields: [
+          { type: "string", term: "identifier", field_display_name: "Account ID", index: 0 },
+          { type: "owner", account_role: "Implementation Manager", field_display_name: "Impl. Manager", index: 6 },
+          { type: "string_attribute", attribute: "Simplified Opp Product Groups", field_display_name: "Products", index: 8 }
+        ]
+      })
+    }
+  };
+
+  let selectedQuery = 'accounts';
+  let currentData = [];
+  let currentHeaders = [];
+
+  function selectQuery(key) {
+    selectedQuery = key;
+    document.querySelectorAll('.query-card').forEach(c => c.classList.remove('active'));
+    document.getElementById('card-' + key).classList.add('active');
+  }
+
+  async function runQuery() {
+    const btn = document.getElementById('runBtn');
+    const status = document.getElementById('status');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Fetching...';
+    status.className = 'status';
+    status.textContent = '';
+
+    const q = QUERIES[selectedQuery];
+
+    try {
+      const res = await fetch(q.url, {
+        method: 'POST',
+        headers: {
+          'app-token': TOKEN,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'query=' + encodeURIComponent(q.payload)
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status} — ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      renderResults(data);
+
+    } catch (err) {
+      status.className = 'status error';
+      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        status.textContent = 'CORS error: Totango blocked the browser request. See note below.';
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('emptyState').innerHTML = `
+          <strong>Browser requests are blocked by Totango (CORS policy).</strong><br><br>
+          This is common with APIs not designed for direct browser use.<br>
+          Use the <code>.sh</code> scripts in Terminal, or ask Marty about the Postman setup.
+        `;
+        document.getElementById('resultsTable').style.display = 'none';
+      } else {
+        status.textContent = 'Error: ' + err.message;
+      }
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '▶ Run Query';
+    }
+  }
+
+  function renderResults(data) {
+    const hits = data?.response?.accounts?.hits?.hits || data?.response?.users?.hits?.hits || [];
+    const status = document.getElementById('status');
+
+    if (!hits.length) {
+      status.className = 'status';
+      status.textContent = 'Query returned 0 results.';
+      document.getElementById('resultCount').textContent = '0 results';
+      document.getElementById('emptyState').style.display = 'block';
+      document.getElementById('emptyState').textContent = 'No results returned.';
+      document.getElementById('resultsTable').style.display = 'none';
+      return;
+    }
+
+    // Build headers from first hit
+    const sample = hits[0]._source || hits[0];
+    currentHeaders = Object.keys(sample).filter(k => k !== 'name' || true);
+
+    // Use field display names from the payload fields
+    const q = QUERIES[selectedQuery];
+    const fields = JSON.parse(q.payload).fields;
+    const parentFields = JSON.parse(q.payload).parent_account_fields || [];
+    const allFields = [...fields, ...parentFields];
+
+    currentHeaders = allFields.map(f => f.field_display_name);
+
+    currentData = hits.map(hit => {
+      const src = hit._source || hit;
+      return allFields.map(f => {
+        const key = f.field_display_name;
+        // Try to find the value by matching display name in the source
+        const val = src[key] ?? src[f.attribute] ?? src[f.term] ?? '';
+        return val !== null && val !== undefined ? String(val) : '';
+      });
+    });
+
+    // Actually parse the raw hits more directly
+    currentData = hits.map(hit => {
+      const src = hit._source || hit;
+      const srcKeys = Object.keys(src);
+      return allFields.map((f, i) => {
+        // Totango returns values positionally or by field name
+        const rawVal = src[srcKeys[i]] ?? '';
+        return rawVal !== null && rawVal !== undefined ? String(rawVal) : '';
+      });
+    });
+
+    // Simpler: just use the keys from the source object
+    const srcKeys = Object.keys(hits[0]._source || hits[0]);
+    currentHeaders = srcKeys;
+    currentData = hits.map(hit => {
+      const src = hit._source || hit;
+      return srcKeys.map(k => {
+        const v = src[k];
+        return v !== null && v !== undefined ? String(v) : '';
+      });
+    });
+
+    const thead = document.getElementById('tableHead');
+    const tbody = document.getElementById('tableBody');
+    thead.innerHTML = '<tr>' + currentHeaders.map(h => `<th>${h}</th>`).join('') + '</tr>';
+    tbody.innerHTML = currentData.map(row =>
+      '<tr>' + row.map(cell => `<td title="${cell}">${cell}</td>`).join('') + '</tr>'
+    ).join('');
+
+    document.getElementById('resultsTable').style.display = 'table';
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('resultCount').textContent = `${hits.length} results`;
+    document.getElementById('exportBtn').disabled = false;
+    status.className = 'status success';
+    status.textContent = `✓ ${hits.length} records returned`;
+  }
+
+  function exportCSV() {
+    if (!currentData.length) return;
+    const rows = [currentHeaders, ...currentData];
+    const csv = rows.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `totango_${selectedQuery}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+</script>
+
+</body>
+</html>
