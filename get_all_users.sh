@@ -1,0 +1,7 @@
+#!/bin/bash
+# All users/contacts across accounts in the onboarding list
+# Includes email, role, activity metrics (30d), MI Usage (14d), Klear Usage (14d)
+
+curl --data 'query={"terms":[{"type":"parent_account","terms":[{"type":"active_list","is_in_one_of":[10533556]}]}],"count":1000,"offset":0,"fields":[{"type":"string_attribute","attribute":"Email","field_display_name":"Email"},{"type":"string_attribute","attribute":"contact_account_role","field_display_name":"Account Role"},{"type":"named_aggregation","aggregation":"activity_days","duration":30,"field_display_name":"Number of active days (30d)"},{"type":"activity_aggregation","activity":"MI Usage","duration":14,"field_display_name":"MI Usage (14d)"},{"type":"string_attribute","attribute":"User Intent Use Case","field_display_name":"User Intent Use Case"},{"type":"activity_aggregation","activity":"Klear Usage","duration":14,"field_display_name":"Klear Usage (14d)"},{"type":"simple_date","term":"simple_last_activity_time","field_display_name":"Last activity date"}],"scope":"all","parent_account_fields":[{"type":"string","term":"identifier","field_display_name":"Account id","index":0},{"type":"owner","account_role":"Implementation Manager","field_display_name":"Implementation Manager (Leader)","index":6},{"type":"string_attribute","attribute":"Simplified Opp Product Groups","field_display_name":"Simplified Opp Product Groups","index":8}]}' \
+  --header 'app-token:{bcrypt}$2a$10$rpkERv0Iswv5N9s6AH.Peux3yqh7SAr78C/zHXmrdz4pAmwgdf.d2' \
+  'https://api-eu1.totango.com/api/v1/search/users'
